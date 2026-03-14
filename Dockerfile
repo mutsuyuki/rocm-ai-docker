@@ -22,7 +22,7 @@ RUN apt-get update && \
       build-essential \
       software-properties-common
 
-# Install Basic tools (System packages including dependencies for Ollama and ComfyUI)
+# Install Basic tools
 RUN apt-get update && \
     apt-get install -y \
       git \
@@ -35,11 +35,7 @@ RUN apt-get update && \
       tree \
       zip \
       unzip \
-      jq \
-      zstd \
-      ffmpeg \
-      libgl1 \
-      libglib2.0-0
+      jq
 
 # Japanese environment 
 ENV LANGUAGE=ja_JP.UTF-8
@@ -93,9 +89,28 @@ RUN userdel -rf $(getent passwd ${USER_UID} | cut -d: -f1) 2>/dev/null || true &
     echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME} && \
     chmod 0440 /etc/sudoers.d/${USERNAME}
 
-# Install Ollama using the official Linux installation script
-# Executing here ensures it can integrate with the system video group
-RUN curl -fsSL https://ollama.com/install.sh | sh
+# --- ROCm Runtime & Ollama (AMD GPU Support) ---
+# Install project-specific dependencies (gnupg2 for repo key, zstd for ollama, ffmpeg/libgl for comfyui)
+RUN apt-get update && \
+    apt-get install -y \
+      gnupg2 \
+      zstd \
+      ffmpeg \
+      libgl1 \
+      libglib2.0-0
+
+# Install ROCm 6.2 Runtime for Ubuntu 24.04
+RUN mkdir -p /etc/apt/keyrings && \
+    wget -qO- https://repo.radeon.com/rocm/rocm.gpg.key | gpg --dearmor -o /etc/apt/keyrings/rocm.gpg && \
+    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/6.2 noble main" | tee /etc/apt/sources.list.d/rocm.list && \
+    apt-get update && \
+    apt-get install -y libhsa-runtime64-1 rocm-smi-lib
+ENV PATH="/opt/rocm/bin:$PATH"
+
+# Manually install Ollama with ROCm support (bundle includes AMD runners)
+# We download both the main binary and the ROCm-specific libraries to ensure GPU support
+RUN curl -L https://ollama.com/download/ollama-linux-amd64.tar.zst | tar --zstd -x -C /usr && \
+    curl -L https://ollama.com/download/ollama-linux-amd64-rocm.tar.zst | tar --zstd -x -C /usr
 
 # Change owner of venv to USER
 RUN chown -R ${USERNAME}:${USERNAME} /opt/venv
