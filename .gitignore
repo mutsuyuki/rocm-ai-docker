@@ -1,0 +1,9 @@
+.claude/
+.claude.json
+.gemini/
+.gemini.env
+.codex/
+comfyui/
+open-webui/
+old/
+*.log
