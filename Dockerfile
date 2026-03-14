@@ -41,9 +41,6 @@ RUN apt-get update && \
       libgl1 \
       libglib2.0-0
 
-# Install Ollama using the official Linux installation script
-RUN curl -fsSL https://ollama.com/install.sh | sh
-
 # Japanese environment 
 ENV LANGUAGE=ja_JP.UTF-8
 ENV LANG=ja_JP.UTF-8
@@ -95,6 +92,10 @@ RUN userdel -rf $(getent passwd ${USER_UID} | cut -d: -f1) 2>/dev/null || true &
     useradd -m -u ${USER_UID} -g ${USER_GID} -G sudo,video,audio -s /bin/bash ${USERNAME} && \
     echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME} && \
     chmod 0440 /etc/sudoers.d/${USERNAME}
+
+# Install Ollama using the official Linux installation script
+# Executing here ensures it can integrate with the system video group
+RUN curl -fsSL https://ollama.com/install.sh | sh
 
 # Change owner of venv to USER
 RUN chown -R ${USERNAME}:${USERNAME} /opt/venv
