@@ -1,7 +1,10 @@
 #!/bin/bash
 export HSA_OVERRIDE_GFX_VERSION=11.0.0
+# Stability fix for Strix Halo / Radeon 8060S
+export HSA_ENABLE_SDMA=0
+export OLLAMA_KEEP_ALIVE=-1
 
-echo "🚀 Starting AI tools..."
+echo "🚀 Starting AI tools (ROCm High-Performance Mode)..."
 
 # 1. Ollama (Background)
 if command -v ollama &> /dev/null; then
