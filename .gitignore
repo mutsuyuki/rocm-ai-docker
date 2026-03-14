@@ -3,6 +3,7 @@
 .gemini/
 .gemini.env
 .codex/
+.ollama/
 comfyui/
 open-webui/
 old/

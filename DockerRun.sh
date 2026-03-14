@@ -36,6 +36,7 @@ touch "$(pwd)/.gemini.env"
 mkdir -p "$(pwd)/.claude"
 touch "$(pwd)/.claude.json"
 mkdir -p "$(pwd)/.codex"
+mkdir -p "$(pwd)/.ollama"
 
 if command -v xhost >/dev/null 2>&1; then xhost +; fi
 
@@ -57,6 +58,7 @@ DOCKER_RUN_OPTS=(
     --mount="type=bind,src=$(pwd)/.claude,dst=${HOME}/.claude"
     --mount="type=bind,src=$(pwd)/.claude.json,dst=${HOME}/.claude.json"
     --mount="type=bind,src=$(pwd)/.codex,dst=${HOME}/.codex"
+    --mount="type=bind,src=$(pwd)/.ollama,dst=${HOME}/.ollama"
     --workdir="${HOME}/share"
     --name="${CONTAINER_NAME}"
 )
