@@ -4,6 +4,7 @@
 .gemini.env
 .codex/
 .ollama/
+.webui_secret_key
 comfyui/
 open-webui/
 old/
