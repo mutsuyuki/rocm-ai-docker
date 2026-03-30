@@ -118,6 +118,20 @@ if [ -e "${HOME}/.Xauthority" ]; then
     )
 fi
 
+# .env ファイル内の .local ホスト名をホスト側で解決してコンテナに渡す
+_resolved_hosts=""
+for envfile in $(find "$(pwd)" -name ".env" -not -path "*/.git/*" -not -path "*/node_modules/*" 2>/dev/null); do
+    for host in $(grep -ohP '[a-zA-Z0-9_-]+\.local' "${envfile}" 2>/dev/null); do
+        echo "${_resolved_hosts}" | grep -q "${host}" && continue
+        ip=$(getent hosts "${host}" 2>/dev/null | awk '{print $1}')
+        if [ -n "${ip}" ]; then
+            DOCKER_RUN_OPTS+=(--add-host="${host}:${ip}")
+            _resolved_hosts="${_resolved_hosts} ${host}"
+            echo "  Resolved ${host} → ${ip}"
+        fi
+    done
+done
+
 # --- 6. コンテナの起動 ---
 if [ "${SERVER_MODE}" = true ]; then
     # 停止済みの古いコンテナを削除
