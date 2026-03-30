@@ -120,6 +120,8 @@ fi
 
 # --- 6. コンテナの起動 ---
 if [ "${SERVER_MODE}" = true ]; then
+    # 停止済みの古いコンテナを削除
+    docker rm "${IMAGE_REPOSITORY}_server" 2>/dev/null
     echo "=== Starting server: ${IMAGE_REPOSITORY}_server ==="
     docker run \
         --detach \
