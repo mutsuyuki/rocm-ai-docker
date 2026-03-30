@@ -7,10 +7,21 @@ IMAGE_TAG="latest"
 IMAGE_FULLNAME="${IMAGE_REPOSITORY}:${IMAGE_TAG}"
 CONTAINER_NAME="${IMAGE_REPOSITORY}_$(date "+%Y_%m%d_%H%M%S")"
 
+# --- オプション解析 ---
+SERVER_MODE=false
+for arg in "$@"; do
+    case "${arg}" in
+        --server) SERVER_MODE=true ;;
+    esac
+done
 
 # --- 1. 既存コンテナの再利用 ---
 EXISTING_CONTAINER=$(docker ps --format "{{.Image}} {{.Names}}" | grep "^${IMAGE_FULLNAME} " | awk '{print $2}' | head -n 1)
 if [ -n "${EXISTING_CONTAINER}" ]; then
+    if [ "${SERVER_MODE}" = true ]; then
+        echo "--- Server already running [${EXISTING_CONTAINER}]. ---"
+        exit 0
+    fi
     echo "--- Found running container [${EXISTING_CONTAINER}].  ---"
     if command -v xhost >/dev/null 2>&1; then xhost +; fi
     docker exec -it "${EXISTING_CONTAINER}" bash
@@ -42,9 +53,6 @@ if command -v xhost >/dev/null 2>&1; then xhost +; fi
 
 # --- 4. 実行オプションの構築（共通部分） ---
 DOCKER_RUN_OPTS=(
-    --interactive
-    --tty
-    --rm
     --shm-size="2g"
     --net="host"
     --env="QT_X11_NO_MITSHM=1"
@@ -63,7 +71,6 @@ DOCKER_RUN_OPTS=(
     --mount="type=bind,src=$(pwd)/.ollama,dst=${HOME}/.ollama"
     --security-opt="seccomp=unconfined"
     --workdir="${HOME}/share"
-    --name="${CONTAINER_NAME}"
 )
 
 # --- 5. 条件分岐によるオプションの追加 ---
@@ -112,11 +119,34 @@ if [ -e "${HOME}/.Xauthority" ]; then
 fi
 
 # --- 6. コンテナの起動 ---
-docker run "${DOCKER_RUN_OPTS[@]}" "${IMAGE_FULLNAME}" \
-sh -c "
+if [ "${SERVER_MODE}" = true ]; then
+    echo "=== Starting server: ${IMAGE_REPOSITORY}_server ==="
+    docker run \
+        --detach \
+        --restart="unless-stopped" \
+        --name="${IMAGE_REPOSITORY}_server" \
+        "${DOCKER_RUN_OPTS[@]}" \
+        "${IMAGE_FULLNAME}" \
+        sh -c "
+echo ------- server --------- ;
+echo Image: ${IMAGE_FULLNAME} ;
+bash setup_env.sh ;
+bash start_ai.sh
+"
+    echo "=== Server started. Stop with: docker stop ${IMAGE_REPOSITORY}_server ==="
+else
+    docker run \
+        --interactive \
+        --tty \
+        --rm \
+        --name="${CONTAINER_NAME}" \
+        "${DOCKER_RUN_OPTS[@]}" \
+        "${IMAGE_FULLNAME}" \
+        sh -c "
 echo ------- run --------- ;
 echo Logged in at \$(pwd) ;
 echo Image: ${IMAGE_FULLNAME} ;
 bash setup_env.sh ;
 bash
 "
+fi
