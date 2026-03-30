@@ -3,9 +3,9 @@
 HOST_OS_TYPE=$(uname -s)
 BASE_IMAGE="ubuntu:24.04"
 IMAGE_REPOSITORY="$(basename "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")"
-IMAGE_TAG="latest1"
+IMAGE_TAG="latest"
 IMAGE_FULLNAME="${IMAGE_REPOSITORY}:${IMAGE_TAG}"
-CONTAINER_NAME="${IMAGE_REPOSITORY}_${IMAGE_TAG}_$(date "+%Y_%m%d_%H%M%S")"
+CONTAINER_NAME="${IMAGE_REPOSITORY}_$(date "+%Y_%m%d_%H%M%S")"
 
 
 # --- 1. 既存コンテナの再利用 ---
@@ -32,7 +32,7 @@ docker build \
 
 # --- 3. ホスト側のディレクトリ・ファイル準備 ---
 mkdir -p "$(pwd)/.gemini"
-touch "$(pwd)/.gemini.env"
+touch "$(pwd)/.env"
 mkdir -p "$(pwd)/.claude"
 touch "$(pwd)/.claude.json"
 mkdir -p "$(pwd)/.codex"
@@ -52,14 +52,16 @@ DOCKER_RUN_OPTS=(
     --env="WAYLAND_DISPLAY=${WAYLAND_DISPLAY}"
     --env="XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}"
     --env="PULSE_SERVER=${PULSE_SERVER}"
+    --env="COLORTERM=truecolor"
     --env="OLLAMA_HOST=0.0.0.0"
+    --env-file="$(pwd)/.env"
     --mount="type=bind,src=$(pwd),dst=${HOME}/share"
     --mount="type=bind,src=$(pwd)/.gemini,dst=${HOME}/.gemini"
-    --env-file="$(pwd)/.gemini.env"
     --mount="type=bind,src=$(pwd)/.claude,dst=${HOME}/.claude"
     --mount="type=bind,src=$(pwd)/.claude.json,dst=${HOME}/.claude.json"
     --mount="type=bind,src=$(pwd)/.codex,dst=${HOME}/.codex"
     --mount="type=bind,src=$(pwd)/.ollama,dst=${HOME}/.ollama"
+    --security-opt="seccomp=unconfined"
     --workdir="${HOME}/share"
     --name="${CONTAINER_NAME}"
 )
@@ -76,18 +78,17 @@ if [ "${HOST_OS_TYPE}" = "Linux" ]; then
     # GPUの自動判定
     if lspci 2>/dev/null | grep -qi "nvidia"; then
         DOCKER_RUN_OPTS+=(
-            --gpus="all" 
+            --gpus="all"
             --env="NVIDIA_DRIVER_CAPABILITIES=all"
         )
     elif lspci 2>/dev/null | grep -qi "amd\|radeon"; then
         # ホスト側の /dev/kfd のグループIDを動的に取得（取得失敗時は念のためvideo）
         RENDER_GID=$(stat -c "%g" /dev/kfd 2>/dev/null || echo "video")
         DOCKER_RUN_OPTS+=(
-            --device=/dev/kfd 
-            --device=/dev/dri 
-            --security-opt seccomp=unconfined 
-            --group-add=video 
-            --group-add="${RENDER_GID}" 
+            --device="/dev/kfd"
+            --device="/dev/dri"
+            --group-add="video"
+            --group-add="${RENDER_GID}"
             --env="HSA_OVERRIDE_GFX_VERSION=11.0.0"
         )
     fi
@@ -112,9 +113,10 @@ fi
 
 # --- 6. コンテナの起動 ---
 docker run "${DOCKER_RUN_OPTS[@]}" "${IMAGE_FULLNAME}" \
-bash -c " 
-echo ------- run --------- ; 
+sh -c "
+echo ------- run --------- ;
 echo Logged in at \$(pwd) ;
+echo Image: ${IMAGE_FULLNAME} ;
 bash setup_env.sh ;
 bash
 "
