@@ -96,7 +96,7 @@ if [ "${HOST_OS_TYPE}" = "Linux" ]; then
             --device="/dev/dri"
             --group-add="video"
             --group-add="${RENDER_GID}"
-            --env="HSA_OVERRIDE_GFX_VERSION=11.0.0"
+            --env="HSA_OVERRIDE_GFX_VERSION=11.5.1"
         )
     fi
 fi

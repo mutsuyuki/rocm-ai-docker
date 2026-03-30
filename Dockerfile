@@ -99,10 +99,10 @@ RUN apt-get update && \
       libgl1 \
       libglib2.0-0
 
-# Install ROCm 6.2 Runtime for Ubuntu 24.04
+# Install ROCm 7.2 Runtime for Ubuntu 24.04
 RUN mkdir -p /etc/apt/keyrings && \
     wget -qO- https://repo.radeon.com/rocm/rocm.gpg.key | gpg --dearmor -o /etc/apt/keyrings/rocm.gpg && \
-    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/6.2 noble main" | tee /etc/apt/sources.list.d/rocm.list && \
+    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/7.2 noble main" | tee /etc/apt/sources.list.d/rocm.list && \
     apt-get update && \
     apt-get install -y libhsa-runtime64-1 rocm-smi-lib
 ENV PATH="/opt/rocm/bin:$PATH"

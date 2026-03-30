@@ -1,5 +1,5 @@
 #!/bin/bash
-export HSA_OVERRIDE_GFX_VERSION=11.0.0
+export HSA_OVERRIDE_GFX_VERSION=11.5.1
 # Stability fix for Strix Halo / Radeon 8060S
 export HSA_ENABLE_SDMA=0
 export OLLAMA_KEEP_ALIVE=-1
