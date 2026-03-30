@@ -97,6 +97,7 @@ if [ "${HOST_OS_TYPE}" = "Linux" ]; then
             --group-add="video"
             --group-add="${RENDER_GID}"
             --env="HSA_OVERRIDE_GFX_VERSION=11.5.1"
+            --env="HSA_ENABLE_SDMA=0"
         )
     fi
 fi
