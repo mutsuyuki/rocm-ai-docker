@@ -61,7 +61,6 @@ DOCKER_RUN_OPTS=(
     --env="XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}"
     --env="PULSE_SERVER=${PULSE_SERVER}"
     --env="COLORTERM=truecolor"
-    --env="OLLAMA_HOST=0.0.0.0"
     --env-file="$(pwd)/.env"
     --mount="type=bind,src=$(pwd),dst=${HOME}/share"
     --mount="type=bind,src=$(pwd)/.gemini,dst=${HOME}/.gemini"

@@ -1,5 +1,6 @@
 #!/bin/bash
 # HSA env vars (HSA_OVERRIDE_GFX_VERSION, HSA_ENABLE_SDMA) are set via DockerRun.sh
+export OLLAMA_HOST=0.0.0.0
 export OLLAMA_KEEP_ALIVE=-1
 
 echo "🚀 Starting AI tools (ROCm High-Performance Mode)..."
