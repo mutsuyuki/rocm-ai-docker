@@ -2,7 +2,7 @@
 
 HOST_OS_TYPE=$(uname -s)
 BASE_IMAGE="ubuntu:24.04"
-IMAGE_REPOSITORY="base_dev"
+IMAGE_REPOSITORY="$(basename "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")"
 IMAGE_TAG="latest1"
 IMAGE_FULLNAME="${IMAGE_REPOSITORY}:${IMAGE_TAG}"
 CONTAINER_NAME="${IMAGE_REPOSITORY}_${IMAGE_TAG}_$(date "+%Y_%m%d_%H%M%S")"
@@ -52,6 +52,7 @@ DOCKER_RUN_OPTS=(
     --env="WAYLAND_DISPLAY=${WAYLAND_DISPLAY}"
     --env="XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}"
     --env="PULSE_SERVER=${PULSE_SERVER}"
+    --env="OLLAMA_HOST=0.0.0.0"
     --mount="type=bind,src=$(pwd),dst=${HOME}/share"
     --mount="type=bind,src=$(pwd)/.gemini,dst=${HOME}/.gemini"
     --env-file="$(pwd)/.gemini.env"
