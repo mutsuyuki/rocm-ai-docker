@@ -19,7 +19,7 @@ if [ ! -d "comfyui/venv" ]; then
     echo "🖼️ Setting up ComfyUI..."
     [ ! -d "comfyui" ] && git clone https://github.com/comfyanonymous/ComfyUI.git comfyui
     python3 -m venv comfyui/venv
-    comfyui/venv/bin/pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm6.2
+    comfyui/venv/bin/pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm7.2
     comfyui/venv/bin/pip install -r comfyui/requirements.txt
     
     # Custom Nodes
