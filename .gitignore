@@ -9,3 +9,4 @@ comfyui/
 open-webui/
 old/
 *.log
+.env
