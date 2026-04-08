@@ -100,18 +100,29 @@ RUN apt-get update && \
       libgl1 \
       libglib2.0-0
 
-# Install ROCm 7.2 Runtime for Ubuntu 24.04
+# Install ROCm 7.2 SDK for Ubuntu 24.04 (runtime + hipcc compiler for building HIP/CUDA extensions)
 RUN mkdir -p /etc/apt/keyrings && \
     wget -qO- https://repo.radeon.com/rocm/rocm.gpg.key | gpg --dearmor -o /etc/apt/keyrings/rocm.gpg && \
     echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/7.2 noble main" | tee /etc/apt/sources.list.d/rocm.list && \
+    echo -e "Package: *\nPin: release o=repo.radeon.com\nPin-Priority: 600" | tee /etc/apt/preferences.d/rocm-pin-600 && \
     apt-get update && \
-    apt-get install -y libhsa-runtime64-1 rocm-smi-lib
+    apt-get install -y rocm-hip-runtime-dev rocm-smi-lib \
+      hipsparse-dev hipblas-dev hipsolver-dev rocthrust-dev \
+      rocblas-dev rocsolver-dev rocfft-dev hipfft-dev rocrand-dev hiprand-dev \
+      miopen-hip-dev
 ENV PATH="/opt/rocm/bin:$PATH"
 
 # Manually install Ollama with ROCm support (bundle includes AMD runners)
 # We download both the main binary and the ROCm-specific libraries to ensure GPU support
 RUN curl -L https://ollama.com/download/ollama-linux-amd64.tar.zst | tar --zstd -x -C /usr && \
     curl -L https://ollama.com/download/ollama-linux-amd64-rocm.tar.zst | tar --zstd -x -C /usr
+
+# Additional Install Python 3.10 for Hunyuan3D (tested with 3.10, requirements.txt pins are incompatible with 3.12)
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository -y ppa:deadsnakes/ppa && \
+    apt-get update && \
+    apt-get install -y python3.10 python3.10-dev python3.10-venv
 
 # Change owner of venv to USER
 RUN chown -R ${USERNAME}:${USERNAME} /opt/venv

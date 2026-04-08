@@ -18,13 +18,34 @@ fi
 # 2. Open WebUI (Background)
 if [ -d "open-webui/venv" ]; then
     echo "▶ Starting Open WebUI..."
-    source open-webui/venv/bin/activate
-    open-webui serve > open-webui.log 2>&1 &
+    open-webui/venv/bin/open-webui serve > open-webui.log 2>&1 &
     WEBUI_PID=$!
-    deactivate
     echo "🌐 Open WebUI will be available at http://localhost:8080 soon."
 else
     echo "❌ Open WebUI venv is not found!"
+fi
+
+# 3. Hunyuan3D-2.1 API server (Background)
+if [ -d "hunyuan3d/venv" ]; then
+    echo "▶ Starting Hunyuan3D-2.1 API server (port 8081)..."
+    # Cache models on the shared volume so they survive container rebuilds
+    export TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL=1
+    export HF_HOME="$(pwd)/hunyuan3d/.cache/huggingface"
+    export HY3DGEN_MODELS="$(pwd)/hunyuan3d/.cache/hy3dgen"
+    export U2NET_HOME="$(pwd)/hunyuan3d/.cache/u2net"
+    LOG_PATH="$(pwd)/hunyuan3d.log"
+    cd hunyuan3d
+    venv/bin/python api_server.py \
+        --host 0.0.0.0 \
+        --port 8081 \
+        --device cuda \
+        --cache-path "$(pwd)/gradio_cache" \
+        > "$LOG_PATH" 2>&1 &
+    cd ..
+    HUNYUAN_PID=$!
+    echo "🧊 Hunyuan3D-2.1 API at http://localhost:8081 (loading model...)"
+else
+    echo "⚠️  Hunyuan3D-2.1 venv not found. Skipping."
 fi
 
 # --- Cleanup function for graceful exit ---
@@ -32,7 +53,8 @@ cleanup() {
     echo -e "\n🛑 Stopping AI tools..."
     [ -n "$OLLAMA_PID" ] && kill $OLLAMA_PID 2>/dev/null
     [ -n "$WEBUI_PID" ] && kill $WEBUI_PID 2>/dev/null
-    echo "✅ Ollama and Open WebUI stopped."
+    [ -n "$HUNYUAN_PID" ] && kill $HUNYUAN_PID 2>/dev/null
+    echo "✅ All services stopped."
     exit
 }
 # Trap Ctrl+C (SIGINT) and other signals
@@ -42,12 +64,11 @@ echo "--------------------------------------------------------"
 echo "💡 You can start using Chat UI while ComfyUI is loading!"
 echo "--------------------------------------------------------"
 
-# 3. ComfyUI (Foreground)
+# 4. ComfyUI (Foreground)
 if [ -d "comfyui/venv" ]; then
     echo "▶ Starting ComfyUI (Heavy registry fetch might occur)..."
-    source comfyui/venv/bin/activate
     # Run ComfyUI in foreground to keep the container alive and show logs
-    python comfyui/main.py --listen 0.0.0.0
+    comfyui/venv/bin/python comfyui/main.py --listen 0.0.0.0
 else
     echo "❌ ComfyUI venv is not found!"
 fi
