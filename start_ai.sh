@@ -1,7 +1,8 @@
 #!/bin/bash
 # HSA env vars (HSA_OVERRIDE_GFX_VERSION, HSA_ENABLE_SDMA) are set via DockerRun.sh
 export OLLAMA_HOST=0.0.0.0
-export OLLAMA_KEEP_ALIVE=10m
+export OLLAMA_KEEP_ALIVE=5m
+export OLLAMA_MAX_LOADED_MODELS=1  # 2モデル同時常駐でamdgpu OOM(2026-07-07 kernel panic)を起こしたため
 
 echo "🚀 Starting AI tools (ROCm High-Performance Mode)..."
 
@@ -47,6 +48,16 @@ if [ -d "hunyuan3d/venv" ]; then
 else
     echo "⚠️  Hunyuan3D-2.1 venv not found. Skipping."
 fi
+
+if [ -d "kokoro-tts/venv" ]; then
+    echo "▶ Starting Kokoro TTS API server (port 8082)..."
+    kokoro-tts/venv/bin/python kokoro-tts/server.py > kokoro-tts.log 2>&1 &
+    KOKORO_PID=$!
+    echo "🗣  Kokoro TTS API at http://localhost:8082 (CPU, no VRAM use)"
+else
+    echo "⚠️  kokoro-tts venv not found. Skipping."
+fi
+
 
 # --- Cleanup function for graceful exit ---
 cleanup() {

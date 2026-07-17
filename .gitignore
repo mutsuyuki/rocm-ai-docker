@@ -11,3 +11,6 @@ old/
 *.log
 .env
 hunyuan3d/
+kokoro-tts/venv/
+kokoro-tts/models/
+kokoro-tts.log
